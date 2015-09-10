@@ -28,10 +28,11 @@ def scrape_list(url)
       area: tds[3].text.tidy,
       party: tds[4].text.tidy,
       image: tds[5].css('img/@src').text,
+      term: 2014,
+      source: url,
     }
-    puts data[:image]
-  # data[:image] = URI.join(url, data[:image]).to_s unless data[:image].to_s.empty?
-  # ScraperWiki.save_sqlite([:id, :term], data)
+    data[:image] = URI.join(url, data[:image]).to_s unless data[:image].to_s.empty?
+    ScraperWiki.save_sqlite([:name, :term], data)
   end
 end
 
