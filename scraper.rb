@@ -1,28 +1,23 @@
 #!/bin/env ruby
 # encoding: utf-8
 
-require 'scraperwiki'
 require 'nokogiri'
-require 'colorize'
 require 'pry'
+require 'scraped'
+require 'scraperwiki'
+
 require 'open-uri/cached'
 OpenURI::Cache.cache_path = '.cache'
-
-class String
-  def tidy
-    self.gsub(/[[:space:]]+/, ' ').strip
-  end
-end
 
 def noko_for(url)
   Nokogiri::HTML(open(url).read)
 end
 
-def scrape_list(url)
+def members(url)
   noko = noko_for(url)
-  noko.xpath('//table[@id="table_1"]//tr[td]').each do |tr|
+  noko.xpath('//table[@id="table_1"]//tr[td]').map do |tr|
     tds = tr.css('td')
-    data = { 
+    data = {
       name: tds[1].text.tidy,
       suplente: tds[2].text.tidy,
       area: tds[3].text.tidy,
@@ -32,8 +27,12 @@ def scrape_list(url)
       source: url,
     }
     data[:image] = URI.join(url, URI.encode(data[:image])).to_s unless data[:image].to_s.empty?
-    ScraperWiki.save_sqlite([:name, :term], data)
+    data
   end
 end
 
-scrape_list('http://www.asamblea.gob.pa/diputados/')
+data = members('http://www.asamblea.gob.pa/diputados/')
+data.each { |mem| puts mem.reject { |_, v| v.to_s.empty? }.sort_by { |k, _| k }.to_h } if ENV['MORPH_DEBUG']
+
+ScraperWiki.sqliteexecute('DROP TABLE data') rescue nil
+ScraperWiki.save_sqlite([:name, :term], data)
