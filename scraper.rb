@@ -25,7 +25,7 @@ def members(url)
     tds = tr.css('td')
     data = {
       id: tds[1].text.tidy.idify,
-      name: tds[1].text.tidy,
+      name: tds[1].text.tidy.sub(/^H\.?D\.?\s+/,''),
       suplente: tds[2].text.tidy,
       area: tds[3].text.tidy,
       party: tds[4].text.tidy,
