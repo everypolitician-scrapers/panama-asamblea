@@ -9,6 +9,12 @@ require 'scraperwiki'
 require 'open-uri/cached'
 OpenURI::Cache.cache_path = '.cache'
 
+class String
+  def idify
+    downcase.gsub(/\s+/, '_')
+  end
+end
+
 def noko_for(url)
   Nokogiri::HTML(open(url).read)
 end
@@ -18,6 +24,7 @@ def members(url)
   noko.xpath('//table[@id="table_1"]//tr[td]').map do |tr|
     tds = tr.css('td')
     data = {
+      id: tds[1].text.tidy.idify,
       name: tds[1].text.tidy,
       suplente: tds[2].text.tidy,
       area: tds[3].text.tidy,
@@ -35,4 +42,4 @@ data = members('http://www.asamblea.gob.pa/diputados/')
 data.each { |mem| puts mem.reject { |_, v| v.to_s.empty? }.sort_by { |k, _| k }.to_h } if ENV['MORPH_DEBUG']
 
 ScraperWiki.sqliteexecute('DROP TABLE data') rescue nil
-ScraperWiki.save_sqlite([:name, :term], data)
+ScraperWiki.save_sqlite([:id, :term], data)
